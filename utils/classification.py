@@ -1,7 +1,8 @@
 import pandas as pd
 
 from utils.models import XGBoostClassification, RandomForestClassification, LogisticRegressionClassification
-from utils.metrics import Accuracy, Recall, Precision, F1Score
+from utils.metrics import Accuracy, BalancedAccuracy, Recall, Precision, F1Score, \
+    AreaUnderTheReceiverOperatingCharacteristicCurve, GeometricMean
 
 
 class TrainEvaluation:
@@ -13,9 +14,12 @@ class TrainEvaluation:
 
     _allowed_metrics = {
         'accuracy': Accuracy,
+        'balanced_accuracy': BalancedAccuracy,
         'recall': Recall,
         'precision': Precision,
-        'f1_score': F1Score
+        'f1_score': F1Score,
+        'roc_auc_score': AreaUnderTheReceiverOperatingCharacteristicCurve,
+        'geometric_mean_score': GeometricMean
     }
 
     def __init__(self, train_x: pd.DataFrame, train_y: pd.DataFrame, validation_x: pd.DataFrame,

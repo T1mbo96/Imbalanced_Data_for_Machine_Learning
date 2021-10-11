@@ -1,5 +1,6 @@
 from abc import ABC
-from sklearn import metrics
+from sklearn import metrics as sk_metrics
+from imblearn import metrics as il_metrics
 
 from utils.exceptions import ImproperlyConfigured
 from utils.models import Model
@@ -18,8 +19,8 @@ class Metric(ABC):
 
     def __str__(self):
         return f'{self._model.__class__.__name__}:\n' \
-               f'{self.__class__.__name__} validation: {round(getattr(metrics, self._metric)(self._validation_y, self._model.validation_predictions), 2)}\n' \
-               f'{self.__class__.__name__} test: {round(getattr(metrics, self._metric)(self._test_y, self._model.test_predictions), 2)}'
+               f'{self.__class__.__name__} validation: {round(self.validation_score, 2)}\n' \
+               f'{self.__class__.__name__} test: {round(self.test_score, 2)}'
 
     @property
     def model(self):
@@ -35,15 +36,19 @@ class Metric(ABC):
 
     @property
     def validation_score(self):
-        return self._metric(self._validation_y, self._model.validation_predictions)
+        return getattr(sk_metrics, self._metric)(self._validation_y, self._model.validation_predictions)
 
     @property
     def test_score(self):
-        return self._metric(self._test_y, self._model.test_predictions)
+        return getattr(sk_metrics, self._metric)(self._test_y, self._model.test_predictions)
 
 
 class Accuracy(Metric):
     _metric = 'accuracy_score'
+
+
+class BalancedAccuracy(Metric):
+    _metric = 'balanced_accuracy_score'
 
 
 class Recall(Metric):
@@ -56,3 +61,23 @@ class Precision(Metric):
 
 class F1Score(Metric):
     _metric = 'f1_score'
+
+
+class AreaUnderTheReceiverOperatingCharacteristicCurve(Metric):
+    _metric = 'roc_auc_score'
+
+    @property
+    def test_score(self):
+        return getattr(sk_metrics, self._metric)(self._test_y, self._model.test_predictions_probability)
+
+
+class GeometricMean(Metric):
+    _metric = 'geometric_mean_score'
+
+    @property
+    def validation_score(self):
+        return getattr(il_metrics, self._metric)(self._validation_y.to_numpy().flatten(), self._model.validation_predictions)
+
+    @property
+    def test_score(self):
+        return getattr(il_metrics, self._metric)(self._test_y.to_numpy().flatten(), self._model.test_predictions)
